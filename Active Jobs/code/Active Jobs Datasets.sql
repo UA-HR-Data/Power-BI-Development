@@ -1,7 +1,6 @@
+-- Employees.xlsx --
 
--- Active Jobs w Employee Details.xlsx -- 
-
-  select iden.spriden_pidm pidm,
+  select distinct iden.spriden_pidm pidm,
          iden.spriden_id uaid,
          iden.spriden_last_name last_name,
          iden.spriden_first_name first_name,
@@ -27,7 +26,31 @@
          empl.pebempl_seniority_date seniority_date,
          empl.pebempl_wkpr_code wkpr_code,
          empl.pebempl_flsa_ind flsa_ind,
-         empl.pebempl_internal_ft_pt_ind ft_pt_ind,
+         empl.pebempl_internal_ft_pt_ind ft_pt_ind
+    from pebempl empl
+    join nbrbjob job on empl.pebempl_pidm = job.nbrbjob_pidm
+                    and sysdate between job.nbrbjob_begin_date and nvl(job.nbrbjob_end_date, sysdate)
+    join nbrjobs pos on job.nbrbjob_pidm = pos.nbrjobs_pidm
+                    and job.nbrbjob_posn = pos.nbrjobs_posn
+                    and job.nbrbjob_suff = pos.nbrjobs_suff
+                    and pos.nbrjobs_status != 'T'
+                    and pos.nbrjobs_effective_date = (select max(pos2.nbrjobs_effective_date)                                              
+                                                        from nbrjobs pos2
+                                                       where pos.nbrjobs_pidm = pos2.nbrjobs_pidm
+                                                         and pos.nbrjobs_posn = pos2.nbrjobs_posn
+                                                         and pos.nbrjobs_suff = pos2.nbrjobs_suff
+                                                         and pos2.nbrjobs_effective_date <= sysdate)
+    join spriden iden on empl.pebempl_pidm = iden.spriden_pidm
+                     and iden.spriden_change_ind is null
+    join spbpers pers on empl.pebempl_pidm = pers.spbpers_pidm
+   where empl.pebempl_empl_status = 'A';
+
+
+
+-- Jobs.xlsx -- 
+
+  select iden.spriden_pidm pidm,
+         iden.spriden_id uaid,
          job.nbrbjob_contract_type contract_type,
          job.nbrbjob_posn job_posn,
          job.nbrbjob_suff job_suff,
